@@ -1,0 +1,70 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "knowledge-base-app"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "gunicorn",
+    "sqlalchemy",
+    "jinja2",
+    "python-multipart",
+    "passlib[bcrypt]",
+    "python-dotenv",
+    "alembic",
+    "psycopg2-binary",
+    "openai",
+    "numpy",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "httpx",
+    "hatch",
+    "black",
+    "ruff",
+]
+
+# scripts run inside the Hatch environment
+[tool.hatch.envs.default.scripts]
+lint = "ruff check ./app"      # run via hatch run lint
+fix = "ruff check --fix ./app"
+format = "ruff format ./app"
+test = "pytest -q"
+coverage = "pytest --cov=app --cov-report=xml:coverage.xml --cov-report=term"
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]
+exclude = [
+    "tests/",
+    "test.db",
+    ".venv/",
+    "*.pyc",
+    "*.pyo",
+    "__pycache__/",
+    ".env",
+    ".env.*",
+    ".git/",
+    ".gitignore",
+    ".python-version",
+    "uv.lock",
+]
+
+[tool.ruff]
+# What Python version to target (affects syntax checks)
+target-version = "py311"
+
+# Style choices
+line-length = 88
+extend-ignore = ["E203"]  # optional: example for spacing conflicts with black
+select = ["E", "F", "W", "C90", "Q"]  # sensible default checks
+exclude = ["tests/__pycache__", ".venv", "build", "dist"]
+

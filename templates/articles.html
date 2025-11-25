@@ -1,0 +1,434 @@
+{% extends "base.html" %}
+
+{% block title %}Articles - AI Knowledge Base {% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-900 p-6">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-white mb-2">📚 Knowledge Base</h1>
+                <p class="text-gray-400">Browse and search articles</p>
+            </div>
+            <div class="flex gap-3">
+                <a href="/chat" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition">💬 Back to Chat</a>
+                <button onclick="showCreateModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">+ New Article</button>
+            </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="mb-6">
+            <input type="text" id="search-input" placeholder="Search articles by content or title..." class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent">     
+        </div>
+
+        <!-- Article List -->
+        <div id="articles-container" class="space-y-4">
+            <!-- Articles will be loaded here -->
+        </div>
+        
+        <!-- Article Detail Modal -->
+        <div id="article-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+            <div class="bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar">
+                <!-- Modal Header -->
+                <div class="sticky top-0 bg-gray-800 border-b border-gray-700 p-6 flex items-center justify-between">
+                    <h2 id="modal-title" class="text-2xl font-bold text-white"></h2>
+                    <button onclick="closeDetailModal()" class="text-gray-400 hover:text-white">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Modal Content -->
+                <div class="p-6">
+                    <div id="modal-meta" class="flex items-center gap-4 text-sm text-gray-400 mb-6"></div>
+                    <div id="modal-content" class="text-gray-300 prose prose-invert max-w-none"></div>
+                    <div id="modal-tags" class="mt-6"></div>
+                </div>
+                
+                <!-- Modal Footer (Edit/Delete buttons) -->
+                <div id="modal-footer" class="sticky bottom-0 bg-gray-800 border-t border-gray-700 p-6 flex gap-3 justify-end">
+                    <!-- Edit/Delete Buttons will be added here if user is author/admin -->
+                    <button onclick="editArticle()" class="hidden px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition">Edit Article</button>
+                    <button onclick="deleteArticle()" class="hidden px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition">Delete Article</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Article Modal -->
+         <div id="article-create" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+            <div class="bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar">
+                <!-- Modal Header -->
+                <div class="sticky top-0 bg-gray-800 border-b border-gray-700 p-6 flex items-center justify-between">
+                    <h2 class="text-2xl font-bold text-white">+ New Article</h2>
+                    <button onclick="closeCreateModal()" class="text-gray-400 hover:text-white">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Modal Content -->
+                <div class="p-6">
+                    <!-- Form fields for creating a new article -->
+                     <div class="mb-4">
+                        <label for="new-article-title" class="block text-white mb-2">Title</label>
+                        <input type="text" id="new-article-title" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div class="mb-4">
+                        <label for="new-article-content" class="block text-white mb-2">Content</label>
+                        <textarea id="new-article-content" rows="10" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                    </div>
+                    <div class="mb-4">
+                        <label for="new-article-tags" class="block text-white mb-2">Tags (comma separated)</label>
+                        <input type="text" id="new-article-tags" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div class="flex justify-end">
+                        <button onclick="createArticle(this)" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">Create Article</button>
+                    </div>
+                </div>
+            </div>
+         </div>
+
+        <!-- Edit Article Modal -->
+         <div id="article-edit" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+            <div class="bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar">
+                <!-- Modal Header -->
+                <div class="sticky top-0 bg-gray-800 border-b border-gray-700 p-6 flex items-center justify-between">
+                    <h2 class="text-2xl font-bold text-white">✏️ Edit Article</h2>
+                    <button onclick="closeEditModal()" class="text-gray-400 hover:text-white">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Modal Content -->
+                <div class="p-6">
+                    <!-- Form fields for editing an article -->
+                     <div class="mb-4">
+                        <label for="edit-article-title" class="block text-white mb-2">Title</label>
+                        <input type="text" id="edit-article-title" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div class="mb-4">
+                        <label for="edit-article-content" class="block text-white mb-2">Content</label>
+                        <textarea id="edit-article-content" rows="10" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                    </div>
+                    <div class="mb-4">
+                        <label for="edit-article-tags" class="block text-white mb-2">Tags (comma separated)</label>
+                        <input type="text" id="edit-article-tags" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div class="flex justify-end">
+                        <button onclick="updateArticle(this)" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition">Update Article</button>
+                    </div>
+                </div>
+            </div>
+         </div>
+
+    </div>
+</div>
+
+<script>
+    let allArticles = [];
+    let currentArticleId = null; // Store the currently viewed article ID
+
+    // Load articles from API
+    async function loadArticles() {
+        try {
+            const response = await fetch('/api/v1/articles?limit=100');
+            allArticles = await response.json();
+            renderArticles(allArticles);
+        } catch (error) {
+            console.error("Failed to load articles:", error);
+            document.getElementById('articles-container').innerHTML = '<p class="text-red-400 text-center">Failed to load articles. Please try again later.</p>';
+        }
+    }
+
+    // Render articles to the page
+    function renderArticles(articles) {
+        const container = document.getElementById('articles-container');
+
+        if (articles.length === 0) {
+            container.innerHTML = `
+                <div class="text-center text-gray-400 py-12">
+                    <p class="text-lg mb-4">No articles yet</p>
+                    <p class="text-sm">Create your first article to get started!</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = articles.map(article => `
+            <div class="bg-gray-800 border-gray-700 rounded-lg p-6 hover:border-blue-500 transition cursor-pointer"
+                onclick="viewArticle(${article.id})">
+                <!-- Title and Author -->
+                <div class="flex items-start justify-between mb-3">
+                    <h3 class="text-xl font-semibold text-white">${article.title}</h3>
+                    <span class="text-xs text-gray-500">${new Date(article.created_at).toLocaleDateString()}</span>
+                </div>
+
+                <!-- Content Preview -->
+                <p class="text-gray-400 mb-4 line-clamp-2">${article.content.substring(0, 200)}...</p>
+
+                <!-- Tags -->
+                ${article.tags && article.tags.length > 0 ? `
+                    <div class="flex flex-wrap gap-2">
+                        ${article.tags.map(tag => `
+                            <span class="px-2 py-1 bg-blue-600/20 text-blue-400 text-xs rounded">${tag.name || tag}</span>
+                        `).join('')}
+                    </div>
+                ` : ''}
+            </div>
+        `).join('');
+    }
+
+    // View article details
+    async function viewArticle(articleId) {
+        try {
+            currentArticleId = articleId; // Store the current article ID
+            const response = await fetch(`/api/v1/articles/${articleId}`);
+            const article = await response.json();
+            // Check if current user is author or admin
+            const currentUserResponse = await fetch('/api/v1/me');
+            const currentUser = await currentUserResponse.json();
+            const isAuthorOrAdmin = currentUser && (currentUser.is_admin || currentUser.id === article.author_id);
+            displayEditDeleteButtons(isAuthorOrAdmin);
+
+            // Populate modal
+            document.getElementById('modal-title').textContent = article.title;
+            document.getElementById('modal-meta').innerHTML = `
+                <span>📅 ${new Date(article.created_at).toLocaleDateString()}</span>
+                <span>👤 Author ID: ${article.author_id}</span>
+            `;
+            document.getElementById('modal-content').innerHTML = article.content.replace(/\n/g, '<br>');
+
+            //Tags
+            if (article.tags && article.tags.length > 0) {
+                document.getElementById('modal-tags').innerHTML = `
+                    <div class="flex flex-wrap gap-2">
+                        ${article.tags.map(tag => `
+                            <span class="px-3 py-1 bg-blue-600/20 text-blue-400 text-sm rounded-full">${tag.name || tag}</span>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                document.getElementById('modal-tags').innerHTML = '';
+            }
+
+            // Show modal
+            document.getElementById('article-modal').classList.remove('hidden');
+        } catch (error) {
+            console.error("Failed to load article:", error);
+            alert("Failed to load article. Please try again later.");
+        }
+    }
+
+    // Edit article
+    async function editArticle() {
+        try {
+            const response = await fetch(`/api/v1/articles/${currentArticleId}`);
+            const article = await response.json();
+
+            // Pre-fill edit modal with article data
+            document.getElementById('edit-article-title').value = article.title;
+            document.getElementById('edit-article-content').value = article.content;
+            document.getElementById('edit-article-tags').value = article.tags.map(tag => tag.name || tag).join(', ');
+            
+            // Show edit modal and close view modal
+            document.getElementById('article-edit').classList.remove('hidden');
+            closeDetailModal();
+        } catch (error) {
+            console.error("Failed to load article for editing:", error);
+            alert("Failed to load article. Please try again.");
+        }
+    }
+
+    // Update article
+    async function updateArticle(button) {
+        const title = document.getElementById('edit-article-title').value;
+        const content = document.getElementById('edit-article-content').value;
+        const tagsInput = document.getElementById('edit-article-tags').value;
+        const tags = tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag !== '');
+
+        button.disabled = true;
+        button.textContent = 'Updating...';
+
+        if (!title.trim() || !content.trim()) {
+            alert("Title and content are required.");
+            button.disabled = false;
+            button.textContent = 'Update Article';
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/v1/articles/${currentArticleId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, content, tags })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                alert(errorData.detail || "Failed to update article.");
+                button.disabled = false;
+                button.textContent = 'Update Article';
+                return;
+            }
+
+            // Refresh articles list and close modal
+            await loadArticles();
+            closeEditModal();
+            alert('Article updated successfully!');
+        } catch (error) {
+            console.error("Failed to update article:", error);
+            alert("Failed to update article. Please try again later.");
+        }
+
+        button.disabled = false;
+        button.textContent = 'Update Article';
+    }
+
+    // Delete article
+    async function deleteArticle() {
+        if (!confirm('Are you sure you want to delete this article? This action cannot be undone.')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/v1/articles/${currentArticleId}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                alert(errorData.detail || "Failed to delete article.");
+                return;
+            }
+
+            // Refresh articles list and close modal
+            await loadArticles();
+            closeDetailModal();
+            alert('Article deleted successfully!');
+        } catch (error) {
+            console.error("Failed to delete article:", error);
+            alert("Failed to delete article. Please try again later.");
+        }
+    }
+
+    // Close modal
+    function closeDetailModal() {
+        document.getElementById('article-modal').classList.add('hidden');
+    }
+
+    // Close modal when clicking outside content
+    document.getElementById('article-modal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'article-modal') {
+            closeDetailModal();
+        }
+    });
+
+    // Show create modal
+    function showCreateModal() {
+        document.getElementById('article-create').classList.remove('hidden');
+    }
+
+    // Close create modal
+    function closeCreateModal() {
+        document.getElementById('article-create').classList.add('hidden');
+    }
+
+    // Close edit modal
+    function closeEditModal() {
+        document.getElementById('article-edit').classList.add('hidden');
+    }
+
+    // Close edit modal when clicking outside content
+    document.getElementById('article-edit')?.addEventListener('click', (e) => {
+        if (e.target.id === 'article-edit') {
+            closeEditModal();
+        }
+    });
+
+    // display edit and delete buttons if user is author/admin
+    function displayEditDeleteButtons(isAuthorOrAdmin) {
+        const footer = document.getElementById('modal-footer');
+        if (isAuthorOrAdmin) {
+            footer.querySelector('button:nth-child(1)').classList.remove('hidden'); // Edit
+            footer.querySelector('button:nth-child(2)').classList.remove('hidden'); // Delete
+        } else {
+            footer.querySelector('button:nth-child(1)').classList.add('hidden'); // Edit
+            footer.querySelector('button:nth-child(2)').classList.add('hidden'); // Delete
+        }
+    }
+
+    // Create new article
+    async function createArticle(button) {
+        const title = document.getElementById('new-article-title').value;
+        const content = document.getElementById('new-article-content').value;
+        const tagsInput = document.getElementById('new-article-tags').value;
+        const tags = tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag !== '');
+
+        button.disabled = true;
+        button.textContent = 'Creating...';
+
+        if (!title.trim() || !content.trim()) {
+            alert("Title and content are required.");
+            button.disabled = false;
+            button.textContent = 'Create';
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/v1/articles', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, content, tags })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                alert(errorData.detail || "Failed to create article.");
+                return;
+            }
+
+            // Refresh articles list
+            await loadArticles();
+            closeCreateModal();
+            document.getElementById('new-article-title').value = '';
+            document.getElementById('new-article-content').value = '';
+            document.getElementById('new-article-tags').value = '';
+        } catch (error) {
+            console.error("Failed to create article:", error);
+            alert("Failed to create article. Please try again later.");
+        }
+
+        button.disabled = false;
+        button.textContent = 'Create';
+    }
+
+    // Search functionality
+    document.getElementById('search-input').addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase();
+
+        if (query === '') {
+            renderArticles(allArticles);
+            return;
+        }
+
+        const filtered = allArticles.filter(article =>
+            article.title.toLowerCase().includes(query) ||
+            article.content.toLowerCase().includes(query) ||
+            (article.tags && article.tags.some(tag => {
+                const tagName = tag.name || tag;
+                return tagName.toLowerCase().includes(query);
+            }))
+        );
+        
+        renderArticles(filtered);
+    });
+
+    // Initialize
+    loadArticles();
+</script>
+{% endblock %}

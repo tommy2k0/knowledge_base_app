@@ -2,7 +2,7 @@
 HTML view routes - serving templates with HTMX
 """
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import APIRouter, Request, Depends, Form, HTTPException, Response, status, Cookie
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
@@ -58,7 +58,7 @@ async def articles_page(request: Request, session_token: str = Cookie(None), ses
     
     # validate session token
     session = session_service.get_session_by_token(session_token)
-    if not session or session.expires_at < datetime.utcnow():
+    if not session or session.expires_at < datetime.now(timezone.utc):
         return RedirectResponse(url="/login")
     
     # get user

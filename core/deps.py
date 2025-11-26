@@ -1,6 +1,6 @@
 from fastapi import Cookie
 from fastapi.responses import RedirectResponse
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 
 from fastapi import Depends, HTTPException, status
@@ -85,7 +85,7 @@ def get_current_user(
     if not session_token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
     session = session_service.get_session_by_token(session_token)
-    if not session or session.expires_at < datetime.utcnow():
+    if not session or session.expires_at < datetime.now(timezone.utc):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Session expired or invalid")
     user = user_service.get_user_by_id(session.user_id)
     if not user:
@@ -100,7 +100,7 @@ def get_current_user_or_redirect(
     if not session_token:
         return RedirectResponse(url="/login")
     session = session_service.get_session_by_token(session_token)
-    if not session or session.expires_at < datetime.utcnow():
+    if not session or session.expires_at < datetime.now(timezone.utc):
         return RedirectResponse(url="/login")
     user = user_service.get_user_by_id(session.user_id)
     if not user:

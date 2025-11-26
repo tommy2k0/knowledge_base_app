@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, timezone
 from ..models.user import UserSession
 from ..schemas.user import UserCreate
 
@@ -20,7 +20,7 @@ class SessionRepository:
     def get_session_by_user_id(self, user_id: int) -> UserSession | None:
         db_sessions = self.db.query(UserSession).filter(UserSession.user_id == user_id).all()
         for session in db_sessions:
-            if session.expires_at > datetime.utcnow():
+            if session.expires_at > datetime.now(timezone.utc):
                 return session
         return None
 
